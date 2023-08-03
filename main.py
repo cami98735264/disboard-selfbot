@@ -12,7 +12,7 @@ class MyClient(discord.Client):
         print('Logged on as', self.user)
 
     async def on_message(self, message):
-        # Only respond to the bumper reminder only if the pre-set reminder message is just a mention of our selfbot
+        # Respond to the bumper reminder only if the pre-set reminder message is just a mention of our selfbot
         if message.author.id == int(bumper_id) and message.content == '<@1136503250749767730>':
             channel = client.get_channel(message.channel.id)
             async for command in channel.slash_commands():
