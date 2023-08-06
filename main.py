@@ -1,25 +1,35 @@
 from dotenv import load_dotenv
 load_dotenv()
 import os
-import time
-import random
-import discord
+from discord.ext import commands
+import asyncio
 token = os.getenv("TOKEN")
 bumper_id = os.getenv("REMINDER_ID")
+p = os.getenv("PREFIX") # add prefix to env 
 
-class MyClient(discord.Client):
-    async def on_ready(self):
-        print('Logged on as', self.user)
+bot = commands.Bot(help_command=None,max_messages=5,prefix=p) #use ext.commands instead of client
 
-    async def on_message(self, message):
-        # Respond to the bumper reminder only if the pre-set reminder message is just a mention of our selfbot
-        if message.author.id == int(bumper_id) and message.content == '<@1136503250749767730>':
-            channel = client.get_channel(message.channel.id)
-            async for command in channel.slash_commands():
-                if command.name == "bump":
-                    # Sleep for a random amount of time between 2 and 5 minutes not to look too suspicious
-                    time.sleep(random.randint(120, 300))
-                    await command(channel)
 
-client = MyClient()
-client.run(token)
+async def bump_loop(command,ctx):
+    while True:
+        await command(ctx)
+        asyncio.sleep(7201) # pretty sure you can only bump once every 2 hours; time.sleep() will close the websocket connection
+
+@bot.event
+async def on_ready():
+    print(f'Logged on as {bot.user}')
+
+@bot.event
+async def on_message(message):
+    if message.author.id == int(bumper_id): #doesn't let other people use it besides bumper, if you are running the command on that account, you can just add self_bot=True and remove this handler
+        await bot.process_commands(message)
+
+@bot.command()
+async def bump(ctx):
+    c = ctx.channel
+    async for command in ctx.channel.slash_commands():
+        if command.name == "bump":
+            asyncio.create_task(bump_loop(command, ctx.channel)) #run on seperate thread 
+
+
+bot.run(token)
